@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>気分メモ</title>
+  <meta name="description" content="気分や症状をボタンで記録できます。あとから、つらくなりやすい時間を見返せます。">
+  <meta name="theme-color" content="#ead1c9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="気分メモ">
+  <link rel="icon" href="./icon-512.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icon-512.png">
+  <link rel="manifest" href="./manifest.json?v=2">
+  <link rel="stylesheet" href="./style.css?v=2">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>気分メモ</h1>
+      <p>気分や症状をボタンで記録できます。<br>あとから、つらくなりやすい時間を見返せます。</p>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2>今の記録</h2>
+        <div id="moodButtons" class="mood-grid" aria-label="気分・症状ボタン"></div>
+        <p id="recordStatus" class="status" role="status" aria-live="polite"></p>
+
+        <div id="otherPanel" class="other-panel hidden">
+          <label for="otherNote" class="panel-title">その他の内容</label>
+          <textarea id="otherNote" rows="3" placeholder="12個に当てはまらない気持ちや出来事を書けます"></textarea>
+          <p class="helper-text">当てはまらない気持ちは、その他に書けます。</p>
+          <div class="button-row">
+            <button id="saveOtherButton" class="sub-button" type="button">保存</button>
+            <button id="cancelOtherButton" class="sub-button ghost" type="button">キャンセル</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>今週の記録</h2>
+          <div class="week-controls">
+            <button id="prevWeekButton" class="mini-button" type="button">前週</button>
+            <button id="thisWeekButton" class="mini-button" type="button">今週に戻る</button>
+            <button id="nextWeekButton" class="mini-button" type="button">翌週</button>
+          </div>
+        </div>
+        <p id="weekLabel" class="week-label"></p>
+        <div class="week-scroll">
+          <table class="week-table">
+            <thead id="weekTableHead"></thead>
+            <tbody id="weekTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>今週の集計</h2>
+        <div id="weeklySummary" class="summary-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>記録一覧</h2>
+          <button id="clearAllButton" class="mini-button danger-soft" type="button">全削除</button>
+        </div>
+        <div id="recordList" class="record-list"></div>
+      </section>
+
+      <section class="card">
+        <h2>バックアップ</h2>
+        <p class="backup-text">記録を保存したり復元できます。<br>大切な記録がなくならないように、<br>定期的に保存をお願いします。</p>
+        <div class="button-row">
+          <button id="exportButton" class="backup-button" type="button">保存</button>
+          <label class="backup-button file-button" for="importFile">復元</label>
+          <input id="importFile" class="file-input" type="file" accept="application/json,.json">
+        </div>
+        <p id="backupStatus" class="status" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+  </div>
+
+  <script src="./main.js?v=2"></script>
+</body>
+</html>
