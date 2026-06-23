@@ -496,8 +496,16 @@ function escapeHtml(value) {
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
+
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=3").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=4").then((registration) => {
       registration.update();
     }).catch((error) => {
       console.warn("Service worker registration failed", error);
