@@ -88,6 +88,11 @@ h2 {
   gap: 10px;
 }
 
+.mood-grid.compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
 .mood-button {
   min-height: 54px;
   padding: 10px 8px;
@@ -119,6 +124,14 @@ h2 {
   border: 1px solid var(--line);
   border-radius: 18px;
   background: rgba(255, 253, 250, 0.9);
+}
+
+.cell-add-panel {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 253, 250, 0.92);
 }
 
 .hidden {
@@ -302,6 +315,25 @@ textarea:focus {
 .week-table td {
   height: 54px;
   padding: 5px;
+}
+
+.week-table td.tap-cell {
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgba(217, 169, 159, 0.08);
+}
+
+.week-table td.tap-cell:focus {
+  outline: 3px solid rgba(217, 169, 159, 0.25);
+  outline-offset: -3px;
+}
+
+.week-table td.tap-cell:active {
+  background: #fff1ec;
+}
+
+.week-table td.selected-cell {
+  background: #fde5df;
+  box-shadow: inset 0 0 0 2px rgba(217, 169, 159, 0.42);
 }
 
 .cell-tags {

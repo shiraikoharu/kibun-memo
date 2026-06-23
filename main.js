@@ -22,6 +22,7 @@ let records = [];
 let weekStart = startOfWeek(new Date());
 let listFilterMode = "today";
 let selectedListDate = formatDate(new Date());
+let selectedCell = null;
 
 const moodButtons = document.getElementById("moodButtons");
 const recordStatus = document.getElementById("recordStatus");
@@ -32,6 +33,15 @@ const cancelOtherButton = document.getElementById("cancelOtherButton");
 const weekLabel = document.getElementById("weekLabel");
 const weekTableHead = document.getElementById("weekTableHead");
 const weekTableBody = document.getElementById("weekTableBody");
+const cellAddPanel = document.getElementById("cellAddPanel");
+const cellAddTitle = document.getElementById("cellAddTitle");
+const cellMoodButtons = document.getElementById("cellMoodButtons");
+const cellAddStatus = document.getElementById("cellAddStatus");
+const cellOtherPanel = document.getElementById("cellOtherPanel");
+const cellOtherNote = document.getElementById("cellOtherNote");
+const saveCellOtherButton = document.getElementById("saveCellOtherButton");
+const cancelCellOtherButton = document.getElementById("cancelCellOtherButton");
+const cancelCellAddButton = document.getElementById("cancelCellAddButton");
 const recordList = document.getElementById("recordList");
 const filterTodayButton = document.getElementById("filterTodayButton");
 const filterDateButton = document.getElementById("filterDateButton");
@@ -60,6 +70,9 @@ function bindEvents() {
   recordDateFilter.value = selectedListDate;
   saveOtherButton.addEventListener("click", saveOtherRecord);
   cancelOtherButton.addEventListener("click", closeOtherPanel);
+  saveCellOtherButton.addEventListener("click", saveCellOtherRecord);
+  cancelCellOtherButton.addEventListener("click", closeCellOtherPanel);
+  cancelCellAddButton.addEventListener("click", closeCellAddPanel);
   prevWeekButton.addEventListener("click", () => moveWeek(-1));
   nextWeekButton.addEventListener("click", () => moveWeek(1));
   thisWeekButton.addEventListener("click", () => {
@@ -80,6 +93,7 @@ function bindEvents() {
 
 function renderMoodButtons() {
   moodButtons.innerHTML = "";
+  cellMoodButtons.innerHTML = "";
   MOODS.forEach((mood) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -94,6 +108,24 @@ function renderMoodButtons() {
       }
     });
     moodButtons.appendChild(button);
+
+    const cellButton = document.createElement("button");
+    cellButton.type = "button";
+    cellButton.className = "mood-button";
+    cellButton.textContent = mood.name;
+    cellButton.style.setProperty("--mood-color", mood.color);
+    cellButton.addEventListener("click", () => {
+      if (!selectedCell) {
+        showStatus(cellAddStatus, "時間帯を選んでください");
+        return;
+      }
+      if (mood.name === "その他") {
+        openCellOtherPanel();
+      } else {
+        addCellRecord(mood.name, "", "mood");
+      }
+    });
+    cellMoodButtons.appendChild(cellButton);
   });
 }
 
@@ -115,13 +147,22 @@ function normalizeRecord(record) {
   const createdAt = typeof record.createdAt === "string" ? record.createdAt : "";
   const fallbackDate = createdAt ? new Date(createdAt) : new Date();
   const safeDate = isValidDateString(record.date) ? record.date : formatDate(fallbackDate);
-  const safeTime = isValidTimeString(record.time) ? record.time : formatTime(fallbackDate);
+  const hasHourOnlyTime = isHourOnlyTime(record.time);
+  const isHourOnly = record.isHourOnly === true || hasHourOnlyTime;
+  const safeTime = hasHourOnlyTime
+    ? record.time
+    : isValidTimeString(record.time)
+      ? record.time
+      : formatTime(fallbackDate);
   const hour = Number.isInteger(record.hour) && record.hour >= 0 && record.hour <= 23
     ? record.hour
-    : Number(safeTime.slice(0, 2));
+    : getHourFromTime(safeTime);
   const mood = typeof record.mood === "string" && record.mood.trim() ? record.mood.trim() : "その他";
   const note = typeof record.note === "string" ? record.note : "";
   const type = record.type === "other" ? "other" : "mood";
+  const fallbackCreatedAtDate = isValidTimeString(safeTime)
+    ? new Date(`${safeDate}T${safeTime}:00`)
+    : new Date(`${safeDate}T${String(Number.isInteger(hour) ? hour : 0).padStart(2, "0")}:00:00`);
 
   return {
     id: typeof record.id === "string" && record.id ? record.id : createId(),
@@ -131,7 +172,8 @@ function normalizeRecord(record) {
     mood,
     note,
     type,
-    createdAt: createdAt || createLocalIso(new Date(`${safeDate}T${safeTime}:00`))
+    isHourOnly,
+    createdAt: createdAt || createLocalIso(fallbackCreatedAtDate)
   };
 }
 
@@ -149,12 +191,38 @@ function addRecord(mood, note, type) {
     mood,
     note,
     type,
+    isHourOnly: false,
     createdAt: createLocalIso(now)
   };
   records = [record, ...records];
   saveRecords();
   showStatus(recordStatus, "記録しました");
   closeOtherPanel();
+  render();
+}
+
+function addCellRecord(mood, note, type) {
+  if (!selectedCell) {
+    showStatus(cellAddStatus, "時間帯を選んでください");
+    return;
+  }
+
+  const now = new Date();
+  const record = {
+    id: createId(),
+    date: selectedCell.date,
+    time: `${selectedCell.hour}時台`,
+    hour: selectedCell.hour,
+    mood,
+    note,
+    type,
+    isHourOnly: true,
+    createdAt: createLocalIso(now)
+  };
+  records = [record, ...records];
+  saveRecords();
+  closeCellOtherPanel();
+  showStatus(cellAddStatus, "この時間帯に記録しました");
   render();
 }
 
@@ -176,6 +244,43 @@ function saveOtherRecord() {
     return;
   }
   addRecord("その他", note, "other");
+}
+
+function openCellAddPanel(date, hour) {
+  selectedCell = { date, hour };
+  cellAddTitle.textContent = `${formatListDate(date)} ${hour}時台に追加`;
+  cellAddPanel.classList.remove("hidden");
+  closeCellOtherPanel();
+  showStatus(cellAddStatus, "");
+  renderWeek();
+}
+
+function closeCellAddPanel() {
+  selectedCell = null;
+  closeCellOtherPanel();
+  showStatus(cellAddStatus, "");
+  cellAddPanel.classList.add("hidden");
+  renderWeek();
+}
+
+function openCellOtherPanel() {
+  cellOtherPanel.classList.remove("hidden");
+  cellOtherNote.focus();
+  showStatus(cellAddStatus, "");
+}
+
+function closeCellOtherPanel() {
+  cellOtherPanel.classList.add("hidden");
+  cellOtherNote.value = "";
+}
+
+function saveCellOtherRecord() {
+  const note = cellOtherNote.value.trim();
+  if (!note) {
+    showStatus(cellAddStatus, "内容を入力してください");
+    return;
+  }
+  addCellRecord("その他", note, "other");
 }
 
 function render() {
@@ -212,9 +317,23 @@ function renderWeek() {
       const dateKey = formatDate(day);
       const cell = document.createElement("td");
       if (dateKey === todayKey) cell.classList.add("today");
+      if (selectedCell && selectedCell.date === dateKey && selectedCell.hour === hour) {
+        cell.classList.add("selected-cell");
+      }
+      cell.classList.add("tap-cell");
+      cell.tabIndex = 0;
+      cell.setAttribute("role", "button");
+      cell.setAttribute("aria-label", `${formatShortDate(day)} ${hour}時台に追加`);
+      cell.addEventListener("click", () => openCellAddPanel(dateKey, hour));
+      cell.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openCellAddPanel(dateKey, hour);
+        }
+      });
       const cellRecords = indexedRecords
         .filter((item) => item.record.date === dateKey && item.record.hour === hour)
-        .sort(compareRecordItemsAsc)
+        .sort(compareWeekCellItems)
         .map((item) => item.record);
       const tagWrap = document.createElement("div");
       tagWrap.className = "cell-tags";
@@ -434,9 +553,17 @@ function compareRecordItemsDesc(a, b) {
   return compared || a.index - b.index;
 }
 
-function compareRecordItemsAsc(a, b) {
-  const compared = compareRecordTimeAsc(a.record, b.record, a.index, b.index);
-  return compared || a.index - b.index;
+function compareWeekCellItems(a, b) {
+  const aMinute = getDisplayMinute(a.record);
+  const bMinute = getDisplayMinute(b.record);
+  if (aMinute !== bMinute) return aMinute - bMinute;
+
+  const aCreated = getCreatedTimeValue(a.record);
+  const bCreated = getCreatedTimeValue(b.record);
+  if (aCreated !== null && bCreated !== null && aCreated !== bCreated) {
+    return aCreated - bCreated;
+  }
+  return a.index - b.index;
 }
 
 function compareRecordTimeDesc(a, b, aIndex, bIndex) {
@@ -453,8 +580,22 @@ function compareRecordTimeAsc(a, b, aIndex, bIndex) {
 function getRecordTimeValue(record, index) {
   const created = Date.parse(record.createdAt || "");
   if (!Number.isNaN(created)) return created;
-  const fallback = Date.parse(`${record.date}T${record.time || "00:00"}:00`);
+  const fallbackTime = isHourOnlyTime(record.time)
+    ? `${String(Number.isInteger(record.hour) ? record.hour : getHourFromTime(record.time)).padStart(2, "0")}:59`
+    : record.time || "00:00";
+  const fallback = Date.parse(`${record.date}T${fallbackTime}:00`);
   return Number.isNaN(fallback) ? index : fallback;
+}
+
+function getDisplayMinute(record) {
+  if (record.isHourOnly || isHourOnlyTime(record.time)) return 60;
+  if (isValidTimeString(record.time)) return Number(record.time.slice(3, 5));
+  return 61;
+}
+
+function getCreatedTimeValue(record) {
+  const created = Date.parse(record.createdAt || "");
+  return Number.isNaN(created) ? null : created;
 }
 
 function createId() {
@@ -472,6 +613,16 @@ function isValidDateString(value) {
 
 function isValidTimeString(value) {
   return typeof value === "string" && /^\d{2}:\d{2}$/.test(value);
+}
+
+function isHourOnlyTime(value) {
+  return typeof value === "string" && /^(?:[01]?\d|2[0-3])時台$/.test(value);
+}
+
+function getHourFromTime(value) {
+  if (isValidTimeString(value)) return Number(value.slice(0, 2));
+  if (isHourOnlyTime(value)) return Number(value.replace("時台", ""));
+  return 0;
 }
 
 function showStatus(element, message) {
@@ -505,7 +656,7 @@ function registerServiceWorker() {
   });
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=4").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=5").then((registration) => {
       registration.update();
     }).catch((error) => {
       console.warn("Service worker registration failed", error);

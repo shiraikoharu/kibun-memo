@@ -13,7 +13,7 @@
   <link rel="icon" href="./icon-512.png" type="image/png">
   <link rel="apple-touch-icon" href="./icon-512.png">
   <link rel="manifest" href="./manifest.json?v=4">
-  <link rel="stylesheet" href="./style.css?v=4">
+  <link rel="stylesheet" href="./style.css?v=5">
 </head>
 <body>
   <div class="app">
@@ -55,6 +55,23 @@
             <tbody id="weekTableBody"></tbody>
           </table>
         </div>
+        <div id="cellAddPanel" class="cell-add-panel hidden">
+          <div class="section-head">
+            <p id="cellAddTitle" class="panel-title"></p>
+            <button id="cancelCellAddButton" class="mini-button" type="button">キャンセル</button>
+          </div>
+          <div id="cellMoodButtons" class="mood-grid compact" aria-label="この時間帯に追加する気分・症状ボタン"></div>
+          <p id="cellAddStatus" class="status" role="status" aria-live="polite"></p>
+          <div id="cellOtherPanel" class="other-panel hidden">
+            <label for="cellOtherNote" class="panel-title">その他の内容</label>
+            <textarea id="cellOtherNote" rows="3" placeholder="12個に当てはまらない気持ちや出来事を書けます"></textarea>
+            <p class="helper-text">当てはまらない気持ちは、その他に書けます。</p>
+            <div class="button-row">
+              <button id="saveCellOtherButton" class="sub-button" type="button">保存</button>
+              <button id="cancelCellOtherButton" class="sub-button ghost" type="button">キャンセル</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="card">
@@ -87,6 +104,6 @@
     </main>
   </div>
 
-  <script src="./main.js?v=4"></script>
+  <script src="./main.js?v=5"></script>
 </body>
 </html>
