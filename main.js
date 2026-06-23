@@ -20,6 +20,8 @@ const weekdayLabels = ["日", "月", "火", "水", "木", "金", "土"];
 
 let records = [];
 let weekStart = startOfWeek(new Date());
+let listFilterMode = "today";
+let selectedListDate = formatDate(new Date());
 
 const moodButtons = document.getElementById("moodButtons");
 const recordStatus = document.getElementById("recordStatus");
@@ -30,8 +32,12 @@ const cancelOtherButton = document.getElementById("cancelOtherButton");
 const weekLabel = document.getElementById("weekLabel");
 const weekTableHead = document.getElementById("weekTableHead");
 const weekTableBody = document.getElementById("weekTableBody");
-const weeklySummary = document.getElementById("weeklySummary");
 const recordList = document.getElementById("recordList");
+const filterTodayButton = document.getElementById("filterTodayButton");
+const filterDateButton = document.getElementById("filterDateButton");
+const filterAllButton = document.getElementById("filterAllButton");
+const dateFilterWrap = document.getElementById("dateFilterWrap");
+const recordDateFilter = document.getElementById("recordDateFilter");
 const prevWeekButton = document.getElementById("prevWeekButton");
 const nextWeekButton = document.getElementById("nextWeekButton");
 const thisWeekButton = document.getElementById("thisWeekButton");
@@ -51,6 +57,7 @@ function init() {
 }
 
 function bindEvents() {
+  recordDateFilter.value = selectedListDate;
   saveOtherButton.addEventListener("click", saveOtherRecord);
   cancelOtherButton.addEventListener("click", closeOtherPanel);
   prevWeekButton.addEventListener("click", () => moveWeek(-1));
@@ -58,6 +65,13 @@ function bindEvents() {
   thisWeekButton.addEventListener("click", () => {
     weekStart = startOfWeek(new Date());
     render();
+  });
+  filterTodayButton.addEventListener("click", () => setListFilter("today"));
+  filterDateButton.addEventListener("click", () => setListFilter("date"));
+  filterAllButton.addEventListener("click", () => setListFilter("all"));
+  recordDateFilter.addEventListener("change", () => {
+    selectedListDate = recordDateFilter.value || formatDate(new Date());
+    renderRecordList();
   });
   clearAllButton.addEventListener("click", clearAllRecords);
   exportButton.addEventListener("click", exportRecords);
@@ -168,7 +182,6 @@ function render() {
   records = records.map(normalizeRecord).filter(Boolean);
   saveRecords();
   renderWeek();
-  renderSummary();
   renderRecordList();
 }
 
@@ -199,8 +212,10 @@ function renderWeek() {
       const cell = document.createElement("td");
       if (dateKey === todayKey) cell.classList.add("today");
       const cellRecords = records
-        .filter((record) => record.date === dateKey && record.hour === hour)
-        .sort(compareRecordsAsc);
+        .map((record, index) => ({ record, index }))
+        .filter((item) => item.record.date === dateKey && item.record.hour === hour)
+        .sort(compareRecordItemsAsc)
+        .map((item) => item.record);
       const tagWrap = document.createElement("div");
       tagWrap.className = "cell-tags";
       cellRecords.forEach((record) => tagWrap.appendChild(createRecordTag(record, true)));
@@ -212,38 +227,20 @@ function renderWeek() {
   }
 }
 
-function renderSummary() {
-  const days = getWeekDays(weekStart).map(formatDate);
-  const counts = new Map();
-  records.forEach((record) => {
-    if (days.includes(record.date)) {
-      counts.set(record.mood, (counts.get(record.mood) || 0) + 1);
-    }
-  });
-
-  const items = Array.from(counts.entries()).sort((a, b) => b[1] - a[1]);
-  weeklySummary.innerHTML = "";
-  if (!items.length) {
-    weeklySummary.innerHTML = '<p class="empty-text">今週の記録はまだありません。</p>';
-    return;
-  }
-
-  items.forEach(([mood, count]) => {
-    const item = document.createElement("div");
-    item.className = "summary-item";
-    item.innerHTML = `<span>${escapeHtml(mood)}</span><span>${count}回</span>`;
-    weeklySummary.appendChild(item);
-  });
-}
-
 function renderRecordList() {
   recordList.innerHTML = "";
-  if (!records.length) {
-    recordList.innerHTML = '<p class="empty-text">記録はまだありません。</p>';
+  renderListFilterState();
+
+  const filteredRecords = getFilteredRecords();
+  if (!filteredRecords.length) {
+    recordList.innerHTML = `<p class="empty-text">${listFilterMode === "all" ? "記録はまだありません。" : "この日の記録はまだありません。"}</p>`;
     return;
   }
 
-  const sorted = [...records].sort(compareRecordsDesc);
+  const sorted = filteredRecords
+    .map((record, index) => ({ record, index }))
+    .sort(compareRecordItemsDesc)
+    .map((item) => item.record);
   sorted.forEach((record) => {
     const item = document.createElement("article");
     item.className = "record-item";
@@ -271,6 +268,31 @@ function renderRecordList() {
     item.append(main, deleteButton);
     recordList.appendChild(item);
   });
+}
+
+function setListFilter(mode) {
+  listFilterMode = mode;
+  if (mode === "today") {
+    selectedListDate = formatDate(new Date());
+    recordDateFilter.value = selectedListDate;
+  }
+  if (mode === "date" && !recordDateFilter.value) {
+    recordDateFilter.value = selectedListDate;
+  }
+  renderRecordList();
+}
+
+function renderListFilterState() {
+  filterTodayButton.classList.toggle("active", listFilterMode === "today");
+  filterDateButton.classList.toggle("active", listFilterMode === "date");
+  filterAllButton.classList.toggle("active", listFilterMode === "all");
+  dateFilterWrap.classList.toggle("hidden", listFilterMode !== "date");
+}
+
+function getFilteredRecords() {
+  if (listFilterMode === "all") return [...records];
+  const targetDate = listFilterMode === "today" ? formatDate(new Date()) : selectedListDate;
+  return records.filter((record) => record.date === targetDate);
 }
 
 function createRecordTag(record, compact) {
@@ -400,12 +422,32 @@ function createHeaderCell(text) {
   return th;
 }
 
-function compareRecordsDesc(a, b) {
-  return `${b.date}T${b.time}`.localeCompare(`${a.date}T${a.time}`);
+function compareRecordItemsDesc(a, b) {
+  const compared = compareRecordTimeDesc(a.record, b.record);
+  return compared || a.index - b.index;
 }
 
-function compareRecordsAsc(a, b) {
-  return `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`);
+function compareRecordItemsAsc(a, b) {
+  const compared = compareRecordTimeAsc(a.record, b.record);
+  return compared || a.index - b.index;
+}
+
+function compareRecordTimeDesc(a, b) {
+  return compareRecordTimeAsc(b, a);
+}
+
+function compareRecordTimeAsc(a, b) {
+  const aTime = getRecordTimeValue(a);
+  const bTime = getRecordTimeValue(b);
+  if (aTime !== bTime) return aTime - bTime;
+  return 0;
+}
+
+function getRecordTimeValue(record) {
+  const created = Date.parse(record.createdAt || "");
+  if (!Number.isNaN(created)) return created;
+  const fallback = Date.parse(`${record.date}T${record.time || "00:00"}:00`);
+  return Number.isNaN(fallback) ? 0 : fallback;
 }
 
 function createId() {

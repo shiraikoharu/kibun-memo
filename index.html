@@ -57,14 +57,18 @@
       </section>
 
       <section class="card">
-        <h2>今週の集計</h2>
-        <div id="weeklySummary" class="summary-list"></div>
-      </section>
-
-      <section class="card">
         <div class="section-head">
           <h2>記録一覧</h2>
           <button id="clearAllButton" class="mini-button danger-soft" type="button">全削除</button>
+        </div>
+        <div class="list-filter" aria-label="記録一覧の表示対象">
+          <button id="filterTodayButton" class="filter-button active" type="button">今日</button>
+          <button id="filterDateButton" class="filter-button" type="button">日付選択</button>
+          <button id="filterAllButton" class="filter-button" type="button">全履歴</button>
+        </div>
+        <div id="dateFilterWrap" class="date-filter-wrap hidden">
+          <label for="recordDateFilter">表示する日付</label>
+          <input id="recordDateFilter" type="date">
         </div>
         <div id="recordList" class="record-list"></div>
       </section>
