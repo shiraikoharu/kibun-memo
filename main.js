@@ -189,6 +189,7 @@ function renderWeek() {
   const days = getWeekDays(weekStart);
   weekLabel.textContent = `${formatShortDate(days[0])} 〜 ${formatShortDate(days[6])}`;
   const todayKey = formatDate(new Date());
+  const indexedRecords = records.map((record, index) => ({ record, index }));
 
   weekTableHead.innerHTML = "";
   const headRow = document.createElement("tr");
@@ -211,8 +212,7 @@ function renderWeek() {
       const dateKey = formatDate(day);
       const cell = document.createElement("td");
       if (dateKey === todayKey) cell.classList.add("today");
-      const cellRecords = records
-        .map((record, index) => ({ record, index }))
+      const cellRecords = indexedRecords
         .filter((item) => item.record.date === dateKey && item.record.hour === hour)
         .sort(compareRecordItemsAsc)
         .map((item) => item.record);
@@ -272,21 +272,28 @@ function renderRecordList() {
 
 function setListFilter(mode) {
   listFilterMode = mode;
+  const today = formatDate(new Date());
   if (mode === "today") {
-    selectedListDate = formatDate(new Date());
+    selectedListDate = today;
     recordDateFilter.value = selectedListDate;
   }
-  if (mode === "date" && !recordDateFilter.value) {
+  if (mode === "date") {
+    selectedListDate = recordDateFilter.value || selectedListDate || today;
     recordDateFilter.value = selectedListDate;
   }
   renderRecordList();
 }
 
 function renderListFilterState() {
-  filterTodayButton.classList.toggle("active", listFilterMode === "today");
-  filterDateButton.classList.toggle("active", listFilterMode === "date");
-  filterAllButton.classList.toggle("active", listFilterMode === "all");
-  dateFilterWrap.classList.toggle("hidden", listFilterMode !== "date");
+  updateFilterButton(filterTodayButton, listFilterMode === "today");
+  updateFilterButton(filterDateButton, listFilterMode === "date");
+  updateFilterButton(filterAllButton, listFilterMode === "all");
+  dateFilterWrap.hidden = listFilterMode !== "date";
+}
+
+function updateFilterButton(button, isActive) {
+  button.classList.toggle("active", isActive);
+  button.setAttribute("aria-pressed", String(isActive));
 }
 
 function getFilteredRecords() {
@@ -423,31 +430,31 @@ function createHeaderCell(text) {
 }
 
 function compareRecordItemsDesc(a, b) {
-  const compared = compareRecordTimeDesc(a.record, b.record);
+  const compared = compareRecordTimeDesc(a.record, b.record, a.index, b.index);
   return compared || a.index - b.index;
 }
 
 function compareRecordItemsAsc(a, b) {
-  const compared = compareRecordTimeAsc(a.record, b.record);
+  const compared = compareRecordTimeAsc(a.record, b.record, a.index, b.index);
   return compared || a.index - b.index;
 }
 
-function compareRecordTimeDesc(a, b) {
-  return compareRecordTimeAsc(b, a);
+function compareRecordTimeDesc(a, b, aIndex, bIndex) {
+  return compareRecordTimeAsc(b, a, bIndex, aIndex);
 }
 
-function compareRecordTimeAsc(a, b) {
-  const aTime = getRecordTimeValue(a);
-  const bTime = getRecordTimeValue(b);
+function compareRecordTimeAsc(a, b, aIndex, bIndex) {
+  const aTime = getRecordTimeValue(a, aIndex);
+  const bTime = getRecordTimeValue(b, bIndex);
   if (aTime !== bTime) return aTime - bTime;
   return 0;
 }
 
-function getRecordTimeValue(record) {
+function getRecordTimeValue(record, index) {
   const created = Date.parse(record.createdAt || "");
   if (!Number.isNaN(created)) return created;
   const fallback = Date.parse(`${record.date}T${record.time || "00:00"}:00`);
-  return Number.isNaN(fallback) ? 0 : fallback;
+  return Number.isNaN(fallback) ? index : fallback;
 }
 
 function createId() {

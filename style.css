@@ -233,6 +233,10 @@ textarea:focus {
   font-weight: 800;
 }
 
+.date-filter-wrap[hidden] {
+  display: none;
+}
+
 .date-filter-wrap input {
   width: 100%;
   min-height: 46px;

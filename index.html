@@ -57,31 +57,31 @@
       </section>
 
       <section class="card">
-        <div class="section-head">
-          <h2>記録一覧</h2>
-          <button id="clearAllButton" class="mini-button danger-soft" type="button">全削除</button>
-        </div>
-        <div class="list-filter" aria-label="記録一覧の表示対象">
-          <button id="filterTodayButton" class="filter-button active" type="button">今日</button>
-          <button id="filterDateButton" class="filter-button" type="button">日付選択</button>
-          <button id="filterAllButton" class="filter-button" type="button">全履歴</button>
-        </div>
-        <div id="dateFilterWrap" class="date-filter-wrap hidden">
-          <label for="recordDateFilter">表示する日付</label>
-          <input id="recordDateFilter" type="date">
-        </div>
-        <div id="recordList" class="record-list"></div>
-      </section>
-
-      <section class="card">
         <h2>バックアップ</h2>
-        <p class="backup-text">記録を保存したり復元できます。<br>大切な記録がなくならないように、<br>定期的に保存をお願いします。</p>
+        <p class="backup-text">記録を保存したり復元したりできます。<br>大切な記録がなくならないように、<br>定期的に保存をお願いします。</p>
         <div class="button-row">
           <button id="exportButton" class="backup-button" type="button">保存</button>
           <label class="backup-button file-button" for="importFile">復元</label>
           <input id="importFile" class="file-input" type="file" accept="application/json,.json">
         </div>
         <p id="backupStatus" class="status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>記録一覧</h2>
+          <button id="clearAllButton" class="mini-button danger-soft" type="button">全削除</button>
+        </div>
+        <div class="list-filter" aria-label="記録一覧の表示対象">
+          <button id="filterTodayButton" class="filter-button active" type="button" aria-pressed="true">今日</button>
+          <button id="filterDateButton" class="filter-button" type="button" aria-pressed="false">日付選択</button>
+          <button id="filterAllButton" class="filter-button" type="button" aria-pressed="false">全履歴</button>
+        </div>
+        <div id="dateFilterWrap" class="date-filter-wrap" hidden>
+          <label for="recordDateFilter">表示する日付</label>
+          <input id="recordDateFilter" type="date">
+        </div>
+        <div id="recordList" class="record-list"></div>
       </section>
     </main>
   </div>
