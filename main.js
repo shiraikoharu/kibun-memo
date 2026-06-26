@@ -2,13 +2,15 @@ const STORAGE_KEY = "koharu_kibun_memo_records";
 
 const MOODS = [
   { name: "つらい", color: "#f6cfc9" },
-  { name: "だるい", color: "#e8e2dd" },
+  { name: "落ち込む", color: "#d9d8f0" },
   { name: "苦しい", color: "#f3c6d0" },
+  { name: "だるい", color: "#e8e2dd" },
   { name: "眠い", color: "#d9e8f7" },
   { name: "気力ない", color: "#e3d7f0" },
   { name: "疲れた", color: "#ead8c6" },
   { name: "ふらつく", color: "#d9e8ec" },
   { name: "不安", color: "#f5e9b8" },
+  { name: "怖い", color: "#d8e8df" },
   { name: "イライラ", color: "#f6d4b8" },
   { name: "落ち着いてる", color: "#d8ead6" },
   { name: "消えたい", color: "#dcdaf1" },
@@ -656,7 +658,7 @@ function registerServiceWorker() {
   });
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=6").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=7").then((registration) => {
       registration.update();
     }).catch((error) => {
       console.warn("Service worker registration failed", error);

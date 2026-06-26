@@ -1,9 +1,9 @@
-const CACHE_NAME = "koharu-kibun-memo-cache-v6";
+const CACHE_NAME = "koharu-kibun-memo-cache-v7";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=6",
-  "./main.js?v=6",
+  "./style.css?v=7",
+  "./main.js?v=7",
   "./manifest.json?v=4",
   "./icon-512.png"
 ];
