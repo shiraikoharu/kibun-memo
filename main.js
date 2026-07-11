@@ -658,7 +658,7 @@ function registerServiceWorker() {
   });
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=8", { updateViaCache: "none" }).then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=9", { updateViaCache: "none" }).then((registration) => {
       if (registration.waiting) {
         registration.waiting.postMessage({ type: "SKIP_WAITING" });
       }
@@ -672,6 +672,7 @@ function registerServiceWorker() {
         });
       });
       registration.update();
+      navigator.serviceWorker.ready.then((readyRegistration) => readyRegistration.update());
     }).catch((error) => {
       console.warn("Service worker registration failed", error);
     });

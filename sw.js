@@ -1,9 +1,9 @@
-const CACHE_NAME = "koharu-kibun-memo-cache-v8";
+const CACHE_NAME = "koharu-kibun-memo-cache-v9";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./style.css?v=8",
-  "./main.js?v=8",
+  "./style.css?v=9",
+  "./main.js?v=9",
   "./manifest.json?v=4",
   "./icon-512.png"
 ];
@@ -34,7 +34,7 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
-  if (request.mode === "navigate" || request.destination === "document") {
+  if (shouldUseNetworkFirst(request)) {
     event.respondWith(networkFirst(request));
     return;
   }
@@ -52,6 +52,16 @@ async function networkFirst(request) {
     const cached = await cache.match(request);
     return cached || cache.match("./index.html");
   }
+}
+
+function shouldUseNetworkFirst(request) {
+  if (request.mode === "navigate" || request.destination === "document") return true;
+
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+  return pathname.endsWith("/style.css")
+    || pathname.endsWith("/main.js")
+    || pathname.endsWith("/manifest.json");
 }
 
 async function cacheFirst(request) {
